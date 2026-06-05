@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		color-scheme: dark;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	html,
+	body {
+		height: 100%;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Scrollbar styling */
+	::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: #334155;
+		border-radius: 3px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: #475569;
+	}
+}
+
+@layer components {
+	/* Glass card style */
+	.glass-card {
+		@apply rounded-xl border border-white/10 bg-slate-800/50 backdrop-blur-sm;
+	}
+
+	/* Status dot */
+	.status-dot {
+		@apply h-2 w-2 rounded-full;
+	}
+	.status-dot.live {
+		@apply bg-green-400 animate-pulse;
+	}
+	.status-dot.offline {
+		@apply bg-slate-500;
+	}
+}
+
+/* Overlay page — transparent background for OBS */
+.overlay-mode {
+	background: transparent !important;
+}
