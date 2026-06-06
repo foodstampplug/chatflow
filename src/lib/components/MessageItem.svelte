@@ -1,13 +1,10 @@
 <script>
 	import { togglePin, hideMsg } from '$lib/stores/chat.js';
-	import { createEventDispatcher } from 'svelte';
 
 	/** @type {import('$lib/stores/chat.js').ChatMessage} */
 	export let message;
 	export let showActions = true;
 	export let compact = false;
-
-	const dispatch = createEventDispatcher();
 
 	function formatTime(ts) {
 		return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -19,79 +16,129 @@
 		subscriber: 'SUB',
 		vip: 'VIP',
 		owner: 'OWNER',
-		member: 'MEMBER',
-		verified: 'VERIFIED'
+		member: 'MEM',
+		verified: 'VER'
 	};
 
 	const BADGE_COLORS = {
-		broadcaster: 'bg-red-600',
-		moderator: 'bg-green-700',
-		subscriber: 'bg-purple-700',
-		vip: 'bg-pink-600',
-		owner: 'bg-red-700',
-		member: 'bg-green-700',
-		verified: 'bg-blue-600'
+		broadcaster: '#dc2626',
+		moderator: '#16a34a',
+		subscriber: '#7c3aed',
+		vip: '#db2777',
+		owner: '#b91c1c',
+		member: '#15803d',
+		verified: '#2563eb'
 	};
 
-	$: isTwitch = message.platform === 'twitch';
-	$: platformColor = isTwitch ? 'bg-twitch' : 'bg-youtube';
-	$: platformLabel = isTwitch ? 'Twitch' : 'YouTube';
+	// Platform config — single source of truth for colors, labels, icons
+	const PLATFORM = {
+		twitch: {
+			color: '#9146FF',
+			label: 'TW',
+			textColor: '#fff',
+			border: '#9146FF',
+			icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>`
+		},
+		youtube: {
+			color: '#FF0000',
+			label: 'YT',
+			textColor: '#fff',
+			border: '#FF0000',
+			icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>`
+		},
+		kick: {
+			color: '#53FC18',
+			label: 'KICK',
+			textColor: '#000',
+			border: '#53FC18',
+			icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9"><path d="M2 2h4v8.5l6-8.5h5l-7 9.5 7.5 10.5H12l-6-9V22H2V2z"/></svg>`
+		},
+		x: {
+			color: '#000',
+			label: 'X',
+			textColor: '#fff',
+			border: '#555',
+			icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`
+		}
+	};
+
+	$: p = PLATFORM[message.platform] ?? PLATFORM.twitch;
+
+	// Username color — fallback to platform color if none provided
+	$: usernameColor = message.color && message.color !== '#000000' && message.color !== '#000'
+		? message.color
+		: p.color;
 
 	let hovering = false;
 </script>
 
 <div
-	class="group relative flex gap-3 rounded-lg px-3 py-2.5 transition-all duration-150
-    {message.pinned ? 'bg-yellow-500/10 ring-1 ring-yellow-500/40' : 'hover:bg-white/5'}
-    {message.hidden ? 'opacity-30' : ''}"
+	class="msg-enter group relative flex items-start gap-3 rounded-lg px-3 py-2.5 transition-all duration-150
+		{message.pinned
+			? 'border-l-2 bg-yellow-500/10 ring-1 ring-yellow-500/25'
+			: 'hover:bg-white/[0.04]'}
+		{message.hidden ? 'opacity-25 pointer-events-none' : ''}"
+	style={message.pinned ? 'border-left-color: #eab308;' : ''}
 	on:mouseenter={() => (hovering = true)}
 	on:mouseleave={() => (hovering = false)}
 	role="article"
 >
-	<!-- Platform badge -->
+	<!-- Platform badge pill -->
 	<div class="mt-0.5 flex-shrink-0">
-		<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white {platformColor}">
-			{platformLabel}
+		<span
+			class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider leading-none select-none"
+			style="background: {p.color}; color: {p.textColor}; {message.platform === 'x' ? 'border: 1px solid #444;' : ''}"
+		>
+			{@html p.icon}
+			{p.label}
 		</span>
 	</div>
 
 	<!-- Message content -->
 	<div class="min-w-0 flex-1">
-		<div class="flex flex-wrap items-center gap-1.5">
-			<!-- User badge chips -->
+		<div class="flex flex-wrap items-center gap-1 mb-0.5">
+			<!-- Role badges -->
 			{#each (message.badges || []) as badge}
-				<span class="inline-flex items-center rounded px-1 py-0 text-[9px] font-semibold uppercase text-white {BADGE_COLORS[badge] || 'bg-slate-600'}">
-					{BADGE_LABELS[badge] || badge}
+				<span
+					class="inline-flex items-center rounded px-1 py-0 text-[9px] font-semibold uppercase tracking-wide text-white leading-4"
+					style="background: {BADGE_COLORS[badge] ?? '#475569'};"
+				>
+					{BADGE_LABELS[badge] ?? badge}
 				</span>
 			{/each}
 
 			<!-- Username -->
 			<span
-				class="font-bold text-sm leading-tight"
-				style="color: {message.color}"
+				class="font-semibold text-sm leading-tight"
+				style="color: {usernameColor}; text-shadow: 0 1px 4px rgba(0,0,0,0.6);"
 			>
 				{message.displayName}
 			</span>
 
-			<!-- Timestamp -->
+			<!-- Timestamp — right-aligned, only when not compact -->
 			{#if !compact}
-				<span class="text-xs text-slate-500 ml-auto">{formatTime(message.timestamp)}</span>
+				<span class="ml-auto text-[10px] text-slate-600 tabular-nums flex-shrink-0">
+					{formatTime(message.timestamp)}
+				</span>
 			{/if}
 		</div>
 
 		<!-- Message text -->
-		<p class="mt-0.5 text-sm text-slate-200 break-words leading-relaxed">
+		<p class="text-sm text-slate-200 break-words leading-relaxed">
 			{message.message}
 		</p>
 	</div>
 
-	<!-- Action buttons — visible on hover -->
-	{#if showActions && hovering}
-		<div class="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-			<!-- Pin -->
+	<!-- Action buttons — appear on hover with fade -->
+	{#if showActions}
+		<div
+			class="absolute right-2 top-2 flex gap-1 transition-all duration-150
+				{hovering ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-0.5 pointer-events-none'}"
+		>
 			<button
-				on:click={() => togglePin(message.id)}
-				class="flex h-6 w-6 items-center justify-center rounded bg-slate-700 text-slate-300 hover:bg-yellow-500 hover:text-white transition-colors"
+				on:click|stopPropagation={() => togglePin(message.id)}
+				class="flex h-6 w-6 items-center justify-center rounded bg-slate-800/90 text-slate-400
+					hover:bg-yellow-500 hover:text-white transition-colors"
 				title={message.pinned ? 'Unpin' : 'Pin message'}
 			>
 				<svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
@@ -103,10 +150,10 @@
 				</svg>
 			</button>
 
-			<!-- Hide -->
 			<button
-				on:click={() => hideMsg(message.id)}
-				class="flex h-6 w-6 items-center justify-center rounded bg-slate-700 text-slate-300 hover:bg-red-600 hover:text-white transition-colors"
+				on:click|stopPropagation={() => hideMsg(message.id)}
+				class="flex h-6 w-6 items-center justify-center rounded bg-slate-800/90 text-slate-400
+					hover:bg-red-600 hover:text-white transition-colors"
 				title="Hide message"
 			>
 				<svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
@@ -116,10 +163,10 @@
 		</div>
 	{/if}
 
-	<!-- Pin indicator -->
+	<!-- Pinned corner badge -->
 	{#if message.pinned}
-		<div class="absolute -top-1 -right-1">
-			<span class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[8px] text-white">
+		<div class="absolute -top-0.5 -right-0.5 flex-shrink-0">
+			<span class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[8px] text-black font-bold shadow-md">
 				&#x1F4CC;
 			</span>
 		</div>

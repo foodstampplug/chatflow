@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,22 +18,45 @@
 		height: 100%;
 		margin: 0;
 		padding: 0;
+		font-family: 'Inter', system-ui, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
 	}
 
-	/* Scrollbar styling */
+	/* Selection color matching the brand */
+	::selection {
+		background: rgba(145, 70, 255, 0.35);
+		color: #fff;
+	}
+	::-moz-selection {
+		background: rgba(145, 70, 255, 0.35);
+		color: #fff;
+	}
+
+	/* Slim, dark scrollbars */
 	::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
+		width: 4px;
+		height: 4px;
 	}
 	::-webkit-scrollbar-track {
 		background: transparent;
 	}
 	::-webkit-scrollbar-thumb {
-		background: #334155;
-		border-radius: 3px;
+		background: #1e293b;
+		border-radius: 2px;
+		transition: background 0.2s;
 	}
 	::-webkit-scrollbar-thumb:hover {
-		background: #475569;
+		background: #334155;
+	}
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	/* Firefox scrollbar */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: #1e293b transparent;
 	}
 }
 
@@ -50,6 +75,71 @@
 	}
 	.status-dot.offline {
 		@apply bg-slate-500;
+	}
+
+	/* Platform gradient rule under header */
+	.platform-gradient-line {
+		background: linear-gradient(90deg, #9146FF 0%, #53FC18 35%, #FF0000 70%, #222 100%);
+		height: 2px;
+		width: 100%;
+	}
+
+	/* Sidebar noise texture overlay */
+	.sidebar-texture {
+		position: relative;
+	}
+	.sidebar-texture::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+		background-size: 200px 200px;
+		pointer-events: none;
+		opacity: 0.4;
+		mix-blend-mode: overlay;
+		border-radius: inherit;
+	}
+
+	/* LIVE indicator pulse dot */
+	.live-dot {
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #ef4444;
+		animation: pulseLive 1.8s ease-in-out infinite;
+		box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+	}
+
+	@keyframes pulseLive {
+		0% {
+			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+			opacity: 1;
+		}
+		60% {
+			box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+			opacity: 0.7;
+		}
+		100% {
+			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+			opacity: 1;
+		}
+	}
+
+	/* Message entrance animation */
+	.msg-enter {
+		animation: msgEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+
+	@keyframes msgEnter {
+		from {
+			transform: translateY(10px);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
 	}
 }
 
