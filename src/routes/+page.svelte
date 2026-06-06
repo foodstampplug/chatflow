@@ -108,12 +108,15 @@
 				<div class="flex items-center gap-2.5">
 					<div
 						class="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
-						style="background: linear-gradient(135deg, #9146FF 0%, #53FC18 100%);"
+						style="background: linear-gradient(135deg, #9146FF 0%, #53FC18 100%); box-shadow: 0 0 20px rgba(145,70,255,0.4), 0 0 40px rgba(83,252,24,0.2);"
 					>
 						<span class="text-[13px] font-black text-white tracking-tighter leading-none select-none"
 							style="text-shadow: 0 1px 3px rgba(0,0,0,0.4);">CF</span>
 					</div>
-					<span class="text-lg font-bold text-white tracking-tight">ChatFlow</span>
+					<div class="flex flex-col gap-0">
+						<span class="text-lg font-bold text-white tracking-tight leading-tight" style="font-family: 'Space Grotesk', system-ui, sans-serif;">ChatFlow</span>
+						<span class="text-slate-500 leading-tight select-none" style="font-size: 10px; font-family: 'Space Grotesk', system-ui, sans-serif;">for Market Bubble</span>
+					</div>
 				</div>
 
 				<!-- LIVE indicator -->
@@ -135,23 +138,31 @@
 			<div class="flex items-center gap-4">
 				<!-- Platform counters — pill badges with platform colors -->
 				<div class="hidden sm:flex items-center gap-2">
-					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-						style="background: rgba(145,70,255,0.15); border: 1px solid rgba(145,70,255,0.3); color: #9146FF;">
+					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 cursor-default"
+						style="background: rgba(145,70,255,0.15); border: 1px solid rgba(145,70,255,0.3); color: #9146FF; font-family: 'Space Grotesk', system-ui, sans-serif;"
+						onmouseenter="this.style.boxShadow='0 0 10px rgba(145,70,255,0.6), 0 0 20px rgba(145,70,255,0.3)'"
+						onmouseleave="this.style.boxShadow='none'">
 						<span class="h-1.5 w-1.5 rounded-full flex-shrink-0" style="background:#9146FF;"></span>
 						TW <span class="text-white font-bold ml-0.5">{twitchCount}</span>
 					</div>
-					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-						style="background: rgba(255,0,0,0.12); border: 1px solid rgba(255,0,0,0.3); color: #FF4444;">
+					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 cursor-default"
+						style="background: rgba(255,0,0,0.12); border: 1px solid rgba(255,0,0,0.3); color: #FF4444; font-family: 'Space Grotesk', system-ui, sans-serif;"
+						onmouseenter="this.style.boxShadow='0 0 10px rgba(255,0,0,0.6), 0 0 20px rgba(255,0,0,0.3)'"
+						onmouseleave="this.style.boxShadow='none'">
 						<span class="h-1.5 w-1.5 rounded-full flex-shrink-0" style="background:#FF0000;"></span>
 						YT <span class="text-white font-bold ml-0.5">{youtubeCount}</span>
 					</div>
-					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-						style="background: rgba(83,252,24,0.1); border: 1px solid rgba(83,252,24,0.3); color: #53FC18;">
+					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 cursor-default"
+						style="background: rgba(83,252,24,0.1); border: 1px solid rgba(83,252,24,0.3); color: #53FC18; font-family: 'Space Grotesk', system-ui, sans-serif;"
+						onmouseenter="this.style.boxShadow='0 0 10px rgba(83,252,24,0.6), 0 0 20px rgba(83,252,24,0.3)'"
+						onmouseleave="this.style.boxShadow='none'">
 						<span class="h-1.5 w-1.5 rounded-full flex-shrink-0" style="background:#53FC18;"></span>
 						Kick <span class="text-white font-bold ml-0.5">{kickCount}</span>
 					</div>
-					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-						style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #aaa;">
+					<div class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200 cursor-default"
+						style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #aaa; font-family: 'Space Grotesk', system-ui, sans-serif;"
+						onmouseenter="this.style.boxShadow='0 0 8px rgba(255,255,255,0.3)'"
+						onmouseleave="this.style.boxShadow='none'">
 						<span class="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-slate-300"></span>
 						X <span class="text-white font-bold ml-0.5">{xCount}</span>
 					</div>

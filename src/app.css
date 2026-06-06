@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,7 +18,7 @@
 		height: 100%;
 		margin: 0;
 		padding: 0;
-		font-family: 'Inter', system-ui, sans-serif;
+		font-family: 'Space Grotesk', system-ui, sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
@@ -82,6 +82,8 @@
 		background: linear-gradient(90deg, #9146FF 0%, #53FC18 35%, #FF0000 70%, #222 100%);
 		height: 2px;
 		width: 100%;
+		filter: blur(0.5px);
+		opacity: 0.8;
 	}
 
 	/* Sidebar noise texture overlay */
@@ -140,6 +142,44 @@
 			transform: translateY(0);
 			opacity: 1;
 		}
+	}
+
+	/* Platform text glows */
+	.glow-twitch {
+		text-shadow: 0 0 12px rgba(145, 70, 255, 0.8);
+	}
+	.glow-youtube {
+		text-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+	}
+	.glow-kick {
+		text-shadow: 0 0 12px rgba(83, 252, 24, 0.8);
+	}
+	.glow-x {
+		text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+	}
+
+	/* Platform badge glows */
+	.badge-glow-twitch {
+		box-shadow: 0 0 10px rgba(145, 70, 255, 0.6), 0 0 20px rgba(145, 70, 255, 0.3);
+	}
+	.badge-glow-youtube {
+		box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3);
+	}
+	.badge-glow-kick {
+		box-shadow: 0 0 10px rgba(83, 252, 24, 0.6), 0 0 20px rgba(83, 252, 24, 0.3);
+	}
+	.badge-glow-x {
+		box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+	}
+
+	/* Market Bubble hero text */
+	.market-bubble-text {
+		font-weight: 900;
+		letter-spacing: -0.02em;
+		background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+		background-clip: text;
+		-webkit-background-clip: text;
+		color: transparent;
 	}
 }
 

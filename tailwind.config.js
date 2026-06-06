@@ -28,8 +28,8 @@ export default {
 				'xtwitter-dark': '#1a1a1a'
 			},
 			fontFamily: {
-				sans: ['"Inter"', 'system-ui', 'sans-serif'],
-				display: ['"Inter"', 'system-ui', 'sans-serif']
+				sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+				display: ['"Space Grotesk"', 'system-ui', 'sans-serif']
 			},
 			animation: {
 				'slide-in': 'slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',

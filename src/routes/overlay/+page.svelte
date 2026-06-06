@@ -137,19 +137,19 @@
 			padding: 0;
 			overflow: hidden;
 		}
-		/* Overlay-specific entrance animation with bounce overshoot */
+
+		/* Premium entrance: slides from right with vertical settle and scale pop */
 		@keyframes overlaySlideIn {
-			0%   { transform: translateX(110%) scale(0.94); opacity: 0; }
-			55%  { transform: translateX(-3%) scale(1.01);  opacity: 1; }
-			75%  { transform: translateX(1%) scale(1.00);  opacity: 1; }
-			100% { transform: translateX(0)   scale(1);     opacity: 1; }
+			0%   { transform: translateX(100%) translateY(4px) scale(0.96); opacity: 0; }
+			60%  { transform: translateX(-2%) translateY(0) scale(1.01); opacity: 1; }
+			100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
 		}
 		@keyframes overlayFadeOut {
 			0%   { opacity: 1; transform: translateX(0) scale(1); }
-			100% { opacity: 0; transform: translateX(6%) scale(0.97); }
+			100% { opacity: 0; transform: translateX(8%) scale(0.96); }
 		}
 		.overlay-enter {
-			animation: overlaySlideIn 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+			animation: overlaySlideIn 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 		}
 		.overlay-enter-energetic {
 			animation: overlaySlideIn 0.44s cubic-bezier(0.36, 1.7, 0.58, 1) forwards;
@@ -157,10 +157,11 @@
 		.overlay-exit {
 			animation: overlayFadeOut 0.55s ease-out forwards;
 		}
-		/* Overlay live pulse */
+
+		/* LIVE dot pulse */
 		@keyframes livePulse {
-			0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); opacity: 1; }
-			60%  { box-shadow: 0 0 0 6px rgba(239,68,68,0); opacity: 0.7; }
+			0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.75); opacity: 1; }
+			60%  { box-shadow: 0 0 0 7px rgba(239,68,68,0); opacity: 0.75; }
 			100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); opacity: 1; }
 		}
 		.live-pulse-dot {
@@ -169,71 +170,194 @@
 			border-radius: 50%;
 			background: #ef4444;
 			animation: livePulse 1.8s ease-in-out infinite;
+			flex-shrink: 0;
+		}
+
+		/* Divider line between branding and LIVE pill */
+		.brand-divider {
+			width: 100%;
+			height: 1px;
+			background: linear-gradient(90deg, #9146FF 0%, #53FC18 50%, #FF0000 100%);
+			opacity: 0.55;
+			margin: 5px 0;
 		}
 	</style>
 </svelte:head>
 
 <!-- Full-viewport transparent overlay for OBS browser source -->
-<div class="fixed inset-0 pointer-events-none overflow-hidden">
+<div style="position: fixed; inset: 0; pointer-events: none; overflow: hidden;">
 
-	<!-- LIVE indicator — top right corner -->
-	{#if connectedPlatforms > 0}
-		<div class="absolute top-4 right-4 flex items-center gap-1.5 rounded-full px-3 py-1.5"
-			style="background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); border: 1px solid rgba(239,68,68,0.3);">
-			<div class="live-pulse-dot"></div>
-			<span style="font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 700; color: #ef4444; letter-spacing: 0.08em;">LIVE</span>
+	<!-- Top-right branding block -->
+	<div style="
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0;
+	">
+		<!-- Market Bubble wordmark -->
+		<div style="
+			background: rgba(6, 8, 16, 0.82);
+			backdrop-filter: blur(16px);
+			-webkit-backdrop-filter: blur(16px);
+			border-radius: 10px;
+			padding: 8px 14px 6px 14px;
+			border: 1px solid rgba(255,255,255,0.06);
+			box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+			display: flex;
+			flex-direction: column;
+			align-items: flex-end;
+			gap: 0;
+			min-width: 140px;
+		">
+			<span style="
+				font-family: 'Space Grotesk', system-ui, sans-serif;
+				font-weight: 900;
+				font-size: 15px;
+				letter-spacing: -0.02em;
+				background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+				background-clip: text;
+				-webkit-background-clip: text;
+				color: transparent;
+				line-height: 1.2;
+				display: block;
+			">MARKET BUBBLE</span>
+
+			<div class="brand-divider"></div>
+
+			<span style="
+				font-family: 'Space Grotesk', system-ui, sans-serif;
+				font-size: 9px;
+				font-weight: 600;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: #64748b;
+				line-height: 1.2;
+				display: block;
+			">LIVE CHAT</span>
 		</div>
-	{/if}
 
-	<!-- Message stack — bottom right, newest on top (visually at bottom) -->
-	<div class="absolute bottom-4 right-4 flex flex-col gap-2 items-end" style="max-width: min(500px, calc(100vw - 2rem));">
+		<!-- LIVE indicator pill — sits below the branding block -->
+		{#if connectedPlatforms > 0}
+			<div style="
+				margin-top: 6px;
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				border-radius: 20px;
+				padding: 5px 12px;
+				background: rgba(6, 8, 16, 0.85);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				border: 1px solid rgba(239,68,68,0.4);
+				box-shadow: 0 0 12px rgba(239,68,68,0.2), 0 2px 8px rgba(0,0,0,0.5);
+				align-self: flex-end;
+			">
+				<div class="live-pulse-dot"></div>
+				<span style="
+					font-family: 'Space Grotesk', system-ui, sans-serif;
+					font-size: 11px;
+					font-weight: 700;
+					color: #ef4444;
+					letter-spacing: 0.1em;
+					line-height: 1;
+				">LIVE</span>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Message stack — bottom right, newest visually at bottom -->
+	<div style="
+		position: absolute;
+		bottom: 16px;
+		right: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		align-items: flex-end;
+		max-width: min(480px, calc(100vw - 2rem));
+	">
 		{#each $overlayMessages as msg (msg.id)}
 			{@const p = getPlatform(msg)}
+			{@const platformKey = msg.platform || 'twitch'}
+			{@const glowMap = {
+				twitch:  'rgba(145,70,255,0.35)',
+				youtube: 'rgba(255,0,0,0.35)',
+				kick:    'rgba(83,252,24,0.3)',
+				x:       'rgba(255,255,255,0.1)'
+			}}
+			{@const badgeGlowMap = {
+				twitch:  '0 0 10px rgba(145,70,255,0.6), 0 0 20px rgba(145,70,255,0.3)',
+				youtube: '0 0 10px rgba(255,0,0,0.6), 0 0 20px rgba(255,0,0,0.3)',
+				kick:    '0 0 10px rgba(83,252,24,0.6), 0 0 20px rgba(83,252,24,0.3)',
+				x:       '0 0 8px rgba(255,255,255,0.3)'
+			}}
+			{@const usernameGlowMap = {
+				twitch:  '0 0 12px rgba(145,70,255,0.8)',
+				youtube: '0 0 12px rgba(255,0,0,0.8)',
+				kick:    '0 0 12px rgba(83,252,24,0.8)',
+				x:       '0 0 12px rgba(255,255,255,0.5)'
+			}}
+			{@const outerGlow = glowMap[platformKey] ?? glowMap.twitch}
+			{@const badgeGlow = badgeGlowMap[platformKey] ?? badgeGlowMap.twitch}
+			{@const usernameGlow = usernameGlowMap[platformKey] ?? usernameGlowMap.twitch}
 			<div
 				class="{msg.fading ? 'overlay-exit' : (msg.isNew ? 'overlay-enter-energetic' : 'overlay-enter')}"
 				style="
 					width: fit-content;
 					max-width: 100%;
-					border-radius: 12px;
+					border-radius: 10px;
 					overflow: hidden;
 					display: flex;
 					align-items: stretch;
-					box-shadow: 0 4px 24px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4);
+					box-shadow: 0 4px 28px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04), 0 2px 40px {outerGlow};
 					opacity: {msg.fading ? '0' : '1'};
 					transition: opacity 0.55s ease;
 				"
 			>
-				<!-- Colored left border accent -->
-				<div style="width: 3px; background: {p.color}; flex-shrink: 0; border-radius: 0;"></div>
+				<!-- Left border accent — platform color with matching glow -->
+				<div style="
+					width: 3px;
+					background: {p.color};
+					flex-shrink: 0;
+					box-shadow: 2px 0 12px {outerGlow};
+				"></div>
 
 				<!-- Card body -->
 				<div style="
-					background: rgba(8, 10, 18, 0.82);
-					backdrop-filter: blur(12px);
-					-webkit-backdrop-filter: blur(12px);
-					padding: 9px 14px 9px 12px;
+					background: rgba(6, 8, 16, 0.88);
+					backdrop-filter: blur(16px);
+					-webkit-backdrop-filter: blur(16px);
+					padding: 10px 14px 10px 12px;
 					min-width: 0;
 					flex: 1;
+					display: flex;
+					flex-direction: column;
+					gap: 5px;
 				">
-					<!-- Top row: platform badge + username + role badges -->
-					<div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
-						<!-- Platform badge -->
+					<!-- Top row: platform badge + role badges + username -->
+					<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+
+						<!-- Platform badge — pill with glow -->
 						<span style="
 							display: inline-flex;
 							align-items: center;
-							gap: 3px;
+							gap: 4px;
 							border-radius: 20px;
-							padding: 1px 7px;
+							padding: 2px 8px 2px 6px;
 							font-size: 9px;
-							font-weight: 800;
+							font-weight: 700;
 							text-transform: uppercase;
-							letter-spacing: 0.06em;
+							letter-spacing: 0.07em;
 							background: {p.color};
 							color: {p.textColor};
 							line-height: 1.6;
 							flex-shrink: 0;
-							{msg.platform === 'x' ? 'border: 1px solid #444;' : ''}
-							font-family: Inter, system-ui, sans-serif;
+							font-family: 'Space Grotesk', system-ui, sans-serif;
+							box-shadow: {badgeGlow};
+							{platformKey === 'x' ? 'border: 1px solid #333;' : ''}
 						">
 							{@html p.icon}
 							{p.label}
@@ -243,15 +367,15 @@
 						{#each (msg.badges || []).slice(0, 2) as badge}
 							<span style="
 								border-radius: 4px;
-								padding: 0 5px;
+								padding: 1px 5px;
 								font-size: 9px;
 								font-weight: 700;
 								text-transform: uppercase;
-								letter-spacing: 0.04em;
+								letter-spacing: 0.05em;
 								color: #fff;
 								line-height: 1.6;
 								background: {BADGE_COLORS[badge] ?? '#475569'};
-								font-family: Inter, system-ui, sans-serif;
+								font-family: 'Space Grotesk', system-ui, sans-serif;
 							">
 								{BADGE_LABELS[badge] ?? badge}
 							</span>
@@ -262,8 +386,8 @@
 							font-weight: 700;
 							font-size: {fontConfig.name === 'text-sm' ? '14px' : fontConfig.name === 'text-xs' ? '12px' : '16px'};
 							color: {getUsernameColor(msg)};
-							text-shadow: 0 1px 5px rgba(0,0,0,0.9);
-							font-family: Inter, system-ui, sans-serif;
+							text-shadow: {usernameGlow};
+							font-family: 'Space Grotesk', system-ui, sans-serif;
 							line-height: 1.3;
 						">
 							{getDisplayName(msg)}
@@ -273,12 +397,12 @@
 					<!-- Message text -->
 					<p style="
 						margin: 0;
-						color: #f1f5f9;
-						font-size: {fontConfig.msg === 'text-base' ? '15px' : fontConfig.msg === 'text-sm' ? '13px' : '18px'};
-						line-height: 1.45;
+						color: rgba(255,255,255,0.92);
+						font-size: {fontConfig.msg === 'text-base' ? '14px' : fontConfig.msg === 'text-sm' ? '13px' : '17px'};
+						line-height: 1.5;
 						word-break: break-word;
 						text-shadow: 0 1px 6px rgba(0,0,0,0.95);
-						font-family: Inter, system-ui, sans-serif;
+						font-family: 'Space Grotesk', system-ui, sans-serif;
 						font-weight: 400;
 					">
 						{msg.message}
