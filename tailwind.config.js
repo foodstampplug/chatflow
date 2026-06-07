@@ -18,18 +18,27 @@ export default {
 	theme: {
 		extend: {
 			colors: {
+				base: '#0A0A0F',
+				surface: '#0F0F18',
+				elevated: '#151522',
+				border: '#1E2040',
+				'poly-blue': '#2E5CFF',
+				'poly-electric': '#00D4FF',
+				'faze-red': '#E43D30',
+				bull: '#00FF88',
+				bear: '#FF9500',
 				twitch: '#9146FF',
 				youtube: '#FF0000',
 				kick: '#53FC18',
-				xtwitter: '#000000',
+				xtwitter: '#FFFFFF',
 				'twitch-dark': '#6B2ECC',
 				'youtube-dark': '#CC0000',
 				'kick-dark': '#3BC410',
-				'xtwitter-dark': '#1a1a1a'
 			},
 			fontFamily: {
-				sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-				display: ['"Space Grotesk"', 'system-ui', 'sans-serif']
+				sans: ['"Inter"', 'system-ui', 'sans-serif'],
+				display: ['"Inter"', 'system-ui', 'sans-serif'],
+				mono: ['"JetBrains Mono"', 'monospace']
 			},
 			animation: {
 				'slide-in': 'slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',

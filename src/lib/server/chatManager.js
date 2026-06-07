@@ -9,9 +9,12 @@ function broadcast(event, data) {
 }
 
 const MAX_MESSAGES = 200;
+const CHATTERS_BROADCAST_EVERY = 5; // broadcast leaderboard every N messages
+let messagesSinceChattersUpdate = 0;
 
 const state = {
 	messages: [],
+	chatters: {}, // key: `username_platform` → { username, displayName, platform, count, color }
 	twitch: { connected: false, channel: null, client: null, messageCount: 0 },
 	youtube: {
 		connected: false, liveChatId: null, apiKey: null,
@@ -19,7 +22,8 @@ const state = {
 	},
 	kick: {
 		connected: false, channel: null, chatroomId: null,
-		ws: null, pingTimer: null, messageCount: 0
+		ws: null, pingTimer: null, messageCount: 0,
+		reconnectAttempts: 0, reconnectTimer: null, intentionalClose: false
 	},
 	x: { connected: false, label: 'X Live', messageCount: 0 }
 };
@@ -29,10 +33,10 @@ const PLATFORM_COLORS = {
 	twitch: '#9146FF',
 	youtube: '#FF0000',
 	kick: '#53FC18',
-	x: '#000000'
+	x: '#1d9bf0'
 };
 
-function makeMessage({ platform, username, displayName, message, color, badges = [] }) {
+function makeMessage({ platform, username, displayName, message, color, badges = [], emotes = null }) {
 	return {
 		id: uuidv4(),
 		platform,
@@ -42,9 +46,37 @@ function makeMessage({ platform, username, displayName, message, color, badges =
 		color: color || PLATFORM_COLORS[platform] || '#888',
 		timestamp: Date.now(),
 		badges,
+		emotes,
 		pinned: false,
 		hidden: false
 	};
+}
+
+// ── Chatters tracking ─────────────────────────────────────────────────────────
+function trackChatter({ username, displayName, platform, color }) {
+	const key = `${username}_${platform}`;
+	if (!state.chatters[key]) {
+		state.chatters[key] = { username, displayName: displayName || username, platform, count: 0, color: color || PLATFORM_COLORS[platform] || '#888' };
+	} else {
+		// keep most recent displayName and color
+		state.chatters[key].displayName = displayName || username;
+		state.chatters[key].color = color || state.chatters[key].color;
+	}
+	state.chatters[key].count++;
+}
+
+function getChatters() {
+	return Object.values(state.chatters)
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 10);
+}
+
+function maybeBroadcastChatters() {
+	messagesSinceChattersUpdate++;
+	if (messagesSinceChattersUpdate >= CHATTERS_BROADCAST_EVERY) {
+		messagesSinceChattersUpdate = 0;
+		broadcast('chatters', getChatters());
+	}
 }
 
 function addMessage(msg) {
@@ -52,7 +84,9 @@ function addMessage(msg) {
 	if (state.messages.length > MAX_MESSAGES) {
 		state.messages.splice(0, state.messages.length - MAX_MESSAGES);
 	}
+	trackChatter({ username: msg.username, displayName: msg.displayName, platform: msg.platform, color: msg.color });
 	broadcast('message', msg);
+	maybeBroadcastChatters();
 	return msg;
 }
 
@@ -84,7 +118,8 @@ async function connectTwitch(channel) {
 			displayName: tags['display-name'] || tags.username || 'Anonymous',
 			message,
 			color: tags.color || '#9146FF',
-			badges
+			badges,
+			emotes: tags.emotes || null
 		});
 		state.twitch.messageCount++;
 		addMessage(msg);
@@ -193,36 +228,36 @@ async function disconnectYouTube() {
 	broadcast('platform_status', getPlatformStatus());
 }
 
-// ── Kick (Pusher WebSocket) ───────────────────────────────────────────────────
-async function connectKick(channelSlug) {
-	if (state.kick.connected) await disconnectKick();
+// ── Kick (Pusher WebSocket) with auto-reconnect ───────────────────────────────
+const KICK_MAX_RECONNECT = 5;
+const KICK_BASE_DELAY_MS = 2000;
 
-	const slug = channelSlug.toLowerCase().trim();
-	console.log(`[Kick] Looking up channel: ${slug}`);
-
-	// Get chatroom ID from Kick public API
-	const channelRes = await fetch(`https://kick.com/api/v2/channels/${slug}`, {
-		headers: {
-			Accept: 'application/json',
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-		}
-	});
-
-	if (!channelRes.ok) {
-		throw new Error(`Kick channel "${slug}" not found (${channelRes.status})`);
+function scheduleKickReconnect() {
+	if (state.kick.reconnectAttempts >= KICK_MAX_RECONNECT) {
+		console.error('[Kick] Max reconnect attempts reached. Giving up.');
+		broadcast('platform_status', getPlatformStatus());
+		broadcast('kick_error', { message: 'Kick disconnected — max reconnect attempts reached. Please reconnect manually.' });
+		return;
 	}
+	const delay = KICK_BASE_DELAY_MS * Math.pow(2, state.kick.reconnectAttempts);
+	state.kick.reconnectAttempts++;
+	console.log(`[Kick] Reconnecting in ${delay / 1000}s (attempt ${state.kick.reconnectAttempts}/${KICK_MAX_RECONNECT})...`);
+	broadcast('kick_reconnecting', { attempt: state.kick.reconnectAttempts, max: KICK_MAX_RECONNECT, delayMs: delay });
+	state.kick.reconnectTimer = setTimeout(() => {
+		if (!state.kick.intentionalClose && state.kick.channel && state.kick.chatroomId) {
+			connectKickWs(state.kick.channel, state.kick.chatroomId);
+		}
+	}, delay);
+}
 
-	const channelData = await channelRes.json();
-	const chatroomId = channelData?.chatroom?.id;
-	if (!chatroomId) throw new Error('Could not find Kick chatroom ID');
+function connectKickWs(slug, chatroomId) {
+	const pusherUrl = 'wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false';
 
-	console.log(`[Kick] Chatroom ID: ${chatroomId} — connecting via Pusher...`);
-	state.kick.chatroomId = chatroomId;
-	state.kick.channel = slug;
-
-	// Connect to Kick's Pusher instance
-	const pusherUrl = 'wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.6.0&flash=false';
 	const kickWs = new WebSocket(pusherUrl);
+
+	const connTimeout = setTimeout(() => {
+		kickWs.close();
+	}, 12000);
 
 	kickWs.on('open', () => {
 		console.log('[Kick] Pusher WebSocket opened');
@@ -233,14 +268,16 @@ async function connectKick(channelSlug) {
 		try { parsed = JSON.parse(raw.toString()); } catch { return; }
 
 		if (parsed.event === 'pusher:connection_established') {
-			// Subscribe to the chatroom channel
 			kickWs.send(JSON.stringify({
 				event: 'pusher:subscribe',
 				data: { auth: '', channel: `chatrooms.${chatroomId}.v2` }
 			}));
 		} else if (parsed.event === 'pusher_internal:subscription_succeeded') {
+			clearTimeout(connTimeout);
 			console.log(`[Kick] Subscribed to chatrooms.${chatroomId}.v2`);
 			state.kick.connected = true;
+			state.kick.ws = kickWs;
+			state.kick.reconnectAttempts = 0; // reset on successful connect
 			broadcast('platform_status', getPlatformStatus());
 		} else if (parsed.event === 'App\\Events\\ChatMessageEvent') {
 			let chatData;
@@ -267,29 +304,160 @@ async function connectKick(channelSlug) {
 	});
 
 	kickWs.on('close', (code, reason) => {
+		clearTimeout(connTimeout);
 		console.log(`[Kick] WebSocket closed (${code}): ${reason}`);
+		if (state.kick.pingTimer) { clearInterval(state.kick.pingTimer); state.kick.pingTimer = null; }
+		state.kick.ws = null;
 		if (state.kick.connected) {
 			state.kick.connected = false;
 			broadcast('platform_status', getPlatformStatus());
 		}
+		// Auto-reconnect if not intentionally closed
+		if (!state.kick.intentionalClose) {
+			scheduleKickReconnect();
+		}
 	});
 
 	kickWs.on('error', (err) => {
+		clearTimeout(connTimeout);
 		console.error('[Kick] WebSocket error:', err.message);
+		// close event will follow and trigger reconnect
 	});
 
-	// Pusher keep-alive ping every 60s
+	// Pusher keep-alive ping every 30s
+	if (state.kick.pingTimer) clearInterval(state.kick.pingTimer);
 	state.kick.pingTimer = setInterval(() => {
 		if (kickWs.readyState === WebSocket.OPEN) {
 			kickWs.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
 		}
-	}, 60000);
+	}, 30000);
 
-	state.kick.ws = kickWs;
-	return { success: true, channel: slug, chatroomId };
+	return kickWs;
+}
+
+async function connectKick(channelSlug, chatroomIdOverride) {
+	if (state.kick.connected) await disconnectKick();
+
+	const slug = channelSlug.toLowerCase().trim();
+	let chatroomId = chatroomIdOverride ? String(chatroomIdOverride).trim() : null;
+
+	if (!chatroomId) {
+		console.log(`[Kick] Looking up channel via API: ${slug}`);
+		const channelRes = await fetch(`https://kick.com/api/v2/channels/${slug}`, {
+			headers: {
+				Accept: 'application/json',
+				'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+				Referer: 'https://kick.com/',
+				Origin: 'https://kick.com'
+			}
+		});
+
+		if (!channelRes.ok) {
+			throw new Error(
+				`Kick API returned ${channelRes.status}. Kick blocks server-side requests — enter the Chatroom ID directly instead. ` +
+				`Find it at kick.com/${slug} → right-click → View Page Source → search "chatroom_id".`
+			);
+		}
+
+		const channelData = await channelRes.json();
+		chatroomId = channelData?.chatroom?.id;
+		if (!chatroomId) throw new Error('Could not find Kick chatroom ID in API response');
+	}
+
+	console.log(`[Kick] Using chatroom ID: ${chatroomId} for channel: ${slug}`);
+	state.kick.chatroomId = chatroomId;
+	state.kick.channel = slug;
+	state.kick.intentionalClose = false;
+	state.kick.reconnectAttempts = 0;
+
+	return new Promise((resolve, reject) => {
+		const pusherUrl = 'wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false';
+		const kickWs = new WebSocket(pusherUrl);
+
+		const connTimeout = setTimeout(() => {
+			kickWs.close();
+			reject(new Error('Kick connection timed out. Check the chatroom ID and try again.'));
+		}, 12000);
+
+		kickWs.on('open', () => {
+			console.log('[Kick] Pusher WebSocket opened');
+		});
+
+		kickWs.on('message', (raw) => {
+			let parsed;
+			try { parsed = JSON.parse(raw.toString()); } catch { return; }
+
+			if (parsed.event === 'pusher:connection_established') {
+				kickWs.send(JSON.stringify({
+					event: 'pusher:subscribe',
+					data: { auth: '', channel: `chatrooms.${chatroomId}.v2` }
+				}));
+			} else if (parsed.event === 'pusher_internal:subscription_succeeded') {
+				clearTimeout(connTimeout);
+				console.log(`[Kick] Subscribed to chatrooms.${chatroomId}.v2`);
+				state.kick.connected = true;
+				state.kick.ws = kickWs;
+				state.kick.reconnectAttempts = 0;
+				broadcast('platform_status', getPlatformStatus());
+				resolve({ success: true, channel: slug, chatroomId });
+			} else if (parsed.event === 'App\\Events\\ChatMessageEvent') {
+				let chatData;
+				try { chatData = JSON.parse(parsed.data); } catch { return; }
+				if (chatData.type !== 'message') return;
+
+				const sender = chatData.sender || {};
+				const identity = sender.identity || {};
+				const badges = (identity.badges || []).map((b) => b.type || b).filter(Boolean);
+
+				const msg = makeMessage({
+					platform: 'kick',
+					username: sender.username || sender.slug || 'Anonymous',
+					displayName: sender.username || sender.slug || 'Anonymous',
+					message: chatData.content || '',
+					color: identity.color || '#53FC18',
+					badges
+				});
+				state.kick.messageCount++;
+				addMessage(msg);
+			} else if (parsed.event === 'pusher:ping') {
+				kickWs.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+			}
+		});
+
+		kickWs.on('close', (code, reason) => {
+			clearTimeout(connTimeout);
+			console.log(`[Kick] WebSocket closed (${code}): ${reason}`);
+			if (state.kick.pingTimer) { clearInterval(state.kick.pingTimer); state.kick.pingTimer = null; }
+			state.kick.ws = null;
+			if (state.kick.connected) {
+				state.kick.connected = false;
+				broadcast('platform_status', getPlatformStatus());
+			}
+			if (!state.kick.intentionalClose) {
+				scheduleKickReconnect();
+			}
+		});
+
+		kickWs.on('error', (err) => {
+			clearTimeout(connTimeout);
+			console.error('[Kick] WebSocket error:', err.message);
+			// If promise hasn't resolved yet, reject it
+			reject(new Error(`Kick connection failed: ${err.message}`));
+		});
+
+		// Pusher keep-alive ping every 30s
+		if (state.kick.pingTimer) clearInterval(state.kick.pingTimer);
+		state.kick.pingTimer = setInterval(() => {
+			if (kickWs.readyState === WebSocket.OPEN) {
+				kickWs.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+			}
+		}, 30000);
+	});
 }
 
 async function disconnectKick() {
+	state.kick.intentionalClose = true;
+	if (state.kick.reconnectTimer) { clearTimeout(state.kick.reconnectTimer); state.kick.reconnectTimer = null; }
 	if (state.kick.pingTimer) { clearInterval(state.kick.pingTimer); state.kick.pingTimer = null; }
 	if (state.kick.ws) {
 		try { state.kick.ws.close(); } catch {}
@@ -299,13 +467,12 @@ async function disconnectKick() {
 	state.kick.channel = null;
 	state.kick.chatroomId = null;
 	state.kick.messageCount = 0;
+	state.kick.reconnectAttempts = 0;
 	broadcast('platform_status', getPlatformStatus());
 	console.log('[Kick] Disconnected.');
 }
 
 // ── X (manual injection) ──────────────────────────────────────────────────────
-// X live stream chat has no public API. Messages are injected via POST /api/x/inject
-// (e.g. from a browser script or extension watching the X stream).
 function injectXMessage({ username, displayName, message, color }) {
 	const msg = makeMessage({
 		platform: 'x',
@@ -371,6 +538,7 @@ const chatManager = {
 	injectXMessage, setXStatus,
 	pinMessage, hideMessage,
 	getPlatformStatus, getMessages,
+	getChatters,
 	disconnectAll
 };
 

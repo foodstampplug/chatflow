@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,172 +18,156 @@
 		height: 100%;
 		margin: 0;
 		padding: 0;
-		font-family: 'Space Grotesk', system-ui, sans-serif;
+		font-family: 'Inter', system-ui, sans-serif;
+		background-color: #0A0A0F;
+		background-image: radial-gradient(rgba(46,92,255,0.08) 1px, transparent 1px);
+		background-size: 24px 24px;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
 
-	/* Selection color matching the brand */
 	::selection {
-		background: rgba(145, 70, 255, 0.35);
+		background: rgba(46, 92, 255, 0.35);
 		color: #fff;
 	}
 	::-moz-selection {
-		background: rgba(145, 70, 255, 0.35);
+		background: rgba(46, 92, 255, 0.35);
 		color: #fff;
 	}
 
-	/* Slim, dark scrollbars */
-	::-webkit-scrollbar {
-		width: 4px;
-		height: 4px;
-	}
-	::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	::-webkit-scrollbar-thumb {
-		background: #1e293b;
-		border-radius: 2px;
-		transition: background 0.2s;
-	}
-	::-webkit-scrollbar-thumb:hover {
-		background: #334155;
-	}
-	::-webkit-scrollbar-corner {
-		background: transparent;
-	}
-
-	/* Firefox scrollbar */
-	* {
-		scrollbar-width: thin;
-		scrollbar-color: #1e293b transparent;
-	}
+	::-webkit-scrollbar { width: 3px; height: 3px; }
+	::-webkit-scrollbar-track { background: transparent; }
+	::-webkit-scrollbar-thumb { background: #1E2040; border-radius: 2px; }
+	::-webkit-scrollbar-thumb:hover { background: #2E5CFF; }
+	::-webkit-scrollbar-corner { background: transparent; }
+	* { scrollbar-width: thin; scrollbar-color: #1E2040 transparent; }
 }
 
 @layer components {
-	/* Glass card style */
-	.glass-card {
-		@apply rounded-xl border border-white/10 bg-slate-800/50 backdrop-blur-sm;
-	}
 
-	/* Status dot */
-	.status-dot {
-		@apply h-2 w-2 rounded-full;
-	}
-	.status-dot.live {
-		@apply bg-green-400 animate-pulse;
-	}
-	.status-dot.offline {
-		@apply bg-slate-500;
-	}
-
-	/* Platform gradient rule under header */
-	.platform-gradient-line {
-		background: linear-gradient(90deg, #9146FF 0%, #53FC18 35%, #FF0000 70%, #222 100%);
+	/* ── Market Bubble header accent line ── */
+	.mb-accent-line {
 		height: 2px;
 		width: 100%;
-		filter: blur(0.5px);
-		opacity: 0.8;
+		background: linear-gradient(90deg, #2E5CFF 0%, #00D4FF 30%, rgba(83,252,24,0.6) 60%, transparent 100%);
+		opacity: 0.9;
 	}
 
-	/* Sidebar noise texture overlay */
-	.sidebar-texture {
-		position: relative;
+	/* ── Scanline overlay ── */
+	.scanline-bg::after {
+		content: '';
+		position: fixed;
+		inset: 0;
+		background: repeating-linear-gradient(
+			0deg,
+			transparent,
+			transparent 2px,
+			rgba(0,0,0,0.03) 2px,
+			rgba(0,0,0,0.03) 4px
+		);
+		pointer-events: none;
+		z-index: 9999;
 	}
-	.sidebar-texture::before {
+
+	/* ── FaZe camo texture (subtle header overlay) ── */
+	.camo-texture {
+		position: relative;
+		overflow: hidden;
+	}
+	.camo-texture::before {
 		content: '';
 		position: absolute;
 		inset: 0;
-		background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-		background-size: 200px 200px;
+		background-image:
+			repeating-linear-gradient(45deg, transparent 0px, transparent 8px, rgba(255,255,255,0.018) 8px, rgba(255,255,255,0.018) 12px),
+			repeating-linear-gradient(-45deg, transparent 0px, transparent 10px, rgba(255,255,255,0.012) 10px, rgba(255,255,255,0.012) 15px),
+			repeating-linear-gradient(90deg, transparent 0px, transparent 20px, rgba(255,255,255,0.008) 20px, rgba(255,255,255,0.008) 22px);
 		pointer-events: none;
-		opacity: 0.4;
-		mix-blend-mode: overlay;
-		border-radius: inherit;
+		z-index: 0;
 	}
+	.camo-texture > * { position: relative; z-index: 1; }
 
-	/* LIVE indicator pulse dot */
+	/* ── LIVE dot ── */
 	.live-dot {
 		display: inline-block;
 		width: 7px;
 		height: 7px;
 		border-radius: 50%;
-		background: #ef4444;
-		animation: pulseLive 1.8s ease-in-out infinite;
-		box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+		background: #2E5CFF;
+		animation: livePulse 2s ease-in-out infinite;
+	}
+	.live-dot-red {
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #E43D30;
+		animation: livePulse 1.8s ease-in-out infinite;
 	}
 
-	@keyframes pulseLive {
-		0% {
-			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
-			opacity: 1;
-		}
-		60% {
-			box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
-			opacity: 0.7;
-		}
-		100% {
-			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-			opacity: 1;
-		}
+	@keyframes livePulse {
+		0%, 100% { box-shadow: 0 0 0 0 rgba(46, 92, 255, 0.6); opacity: 1; }
+		60% { box-shadow: 0 0 0 6px rgba(46, 92, 255, 0); opacity: 0.7; }
 	}
 
-	/* Message entrance animation */
+	/* ── Message entrance ── */
 	.msg-enter {
-		animation: msgEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		animation: msgSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+	@keyframes msgSlide {
+		from { transform: translateY(8px); opacity: 0; }
+		to   { transform: translateY(0);  opacity: 1; }
 	}
 
-	@keyframes msgEnter {
-		from {
-			transform: translateY(10px);
-			opacity: 0;
-		}
-		to {
-			transform: translateY(0);
-			opacity: 1;
-		}
+	/* ── Platform badge glows ── */
+	.badge-glow-twitch  { box-shadow: 0 0 10px rgba(145,70,255,0.7), 0 0 20px rgba(145,70,255,0.3); }
+	.badge-glow-youtube { box-shadow: 0 0 10px rgba(255,0,0,0.7),   0 0 20px rgba(255,0,0,0.3); }
+	.badge-glow-kick    { box-shadow: 0 0 10px rgba(83,252,24,0.7),  0 0 20px rgba(83,252,24,0.3); }
+	.badge-glow-x       { box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+
+	/* ── Polymarket-style number stat ── */
+	.stat-mono {
+		font-family: 'JetBrains Mono', monospace;
+		font-variant-numeric: tabular-nums;
 	}
 
-	/* Platform text glows */
-	.glow-twitch {
-		text-shadow: 0 0 12px rgba(145, 70, 255, 0.8);
-	}
-	.glow-youtube {
-		text-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
-	}
-	.glow-kick {
-		text-shadow: 0 0 12px rgba(83, 252, 24, 0.8);
-	}
-	.glow-x {
-		text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+	/* ── Terminal panel (sidebar) ── */
+	.terminal-panel {
+		background: #0F0F18;
+		border: 1px solid rgba(46, 92, 255, 0.1);
 	}
 
-	/* Platform badge glows */
-	.badge-glow-twitch {
-		box-shadow: 0 0 10px rgba(145, 70, 255, 0.6), 0 0 20px rgba(145, 70, 255, 0.3);
-	}
-	.badge-glow-youtube {
-		box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3);
-	}
-	.badge-glow-kick {
-		box-shadow: 0 0 10px rgba(83, 252, 24, 0.6), 0 0 20px rgba(83, 252, 24, 0.3);
-	}
-	.badge-glow-x {
-		box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+	/* ── Hype Meter panel ── */
+	.hype-panel {
+		background: #0A0A0F;
+		flex-shrink: 0;
 	}
 
-	/* Market Bubble hero text */
-	.market-bubble-text {
-		font-weight: 900;
-		letter-spacing: -0.02em;
-		background: linear-gradient(135deg, #fff 0%, #aaa 100%);
-		background-clip: text;
-		-webkit-background-clip: text;
-		color: transparent;
+	/* ── Hype number pulse on spike ── */
+	@keyframes hypePulse {
+		0%   { text-shadow: 0 0 0px currentColor; }
+		25%  { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; transform: scale(1.06); }
+		50%  { text-shadow: 0 0 10px currentColor; transform: scale(1.02); }
+		75%  { text-shadow: 0 0 16px currentColor; }
+		100% { text-shadow: 0 0 0px currentColor; transform: scale(1); }
 	}
+
+	.hype-pulse {
+		animation: hypePulse 0.8s ease-out forwards;
+	}
+
+	/* ── Polymarket ticker scroll ── */
+	@keyframes ticker-scroll {
+		0%   { transform: translateX(0); }
+		100% { transform: translateX(-50%); }
+	}
+
+	/* ── Token radar spike pulse ── */
+	@keyframes radar-spike {
+		0%, 100% { box-shadow: 0 0 0 0 rgba(83,252,24,0.4); }
+		50%       { box-shadow: 0 0 0 6px rgba(83,252,24,0); }
+	}
+	.token-spike { animation: radar-spike 1.2s ease-in-out infinite; }
 }
 
-/* Overlay page — transparent background for OBS */
-.overlay-mode {
-	background: transparent !important;
-}
+.overlay-mode { background: transparent !important; }

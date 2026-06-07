@@ -14,6 +14,12 @@ export const platformStatus = writable({
 
 export const wsStatus = writable('disconnected');
 
+// ── Keywords store (persists to localStorage via +page.svelte) ─────────────────
+export const keywords = writable([]);
+
+// ── Top Chatters leaderboard ───────────────────────────────────────────────────
+export const topChatters = writable([]);
+
 export const connectedCount = derived(platformStatus, ($p) => {
 	let count = 0;
 	if ($p.twitch?.connected) count++;
